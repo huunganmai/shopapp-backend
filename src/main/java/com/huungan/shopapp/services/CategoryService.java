@@ -3,6 +3,7 @@ package com.huungan.shopapp.services;
 import com.huungan.shopapp.dtos.CategoryDTO;
 import com.huungan.shopapp.models.Category;
 import com.huungan.shopapp.repositories.CategoryRepository;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ public class CategoryService implements ICategoryService{
     private final CategoryRepository categoryRepository;
 
     @Override
+    @Transactional
     public Category createCategory(CategoryDTO categoryDTO) {
         Category newCategory = Category.builder()
                 .name(categoryDTO.getName())
@@ -34,6 +36,7 @@ public class CategoryService implements ICategoryService{
     }
 
     @Override
+    @Transactional
     public Category updateCategory(long categoryId, CategoryDTO categoryDTO) {
         Category existingCategory = getCategoryById(categoryId);
         existingCategory.setName(categoryDTO.getName());
@@ -42,6 +45,7 @@ public class CategoryService implements ICategoryService{
     }
 
     @Override
+    @Transactional
     public void deleteCategory(long categoryId) {
         categoryRepository.deleteById(categoryId);
     }

@@ -11,6 +11,7 @@ import com.huungan.shopapp.services.IProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import com.github.javafaker.Faker;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -102,46 +103,43 @@ public class ProductController {
         }
     }
 
-    /*
-    * name macbook 23
-    * price 432.43
-    * thumbnail ""
-    * description This is  product
-    * category 1
-    * */
+    // GET
+    @GetMapping("/images/{imageName}")
+    public ResponseEntity<?> viewImage(@PathVariable String imageName) {
+        try{
+            java.nio.file.Path imagePath = Paths.get("uploads/" + imageName);
+            UrlResource resource = new UrlResource(imagePath.toUri());
 
-    private String storeFile(MultipartFile file) throws IOException {
-        String filename = StringUtils.cleanPath(file.getOriginalFilename());
-        String uniqueFilename = UUID.randomUUID().toString() + "_" + filename;
-        Path uploadDir = Paths.get("uploads");
-        if(!Files.exists(uploadDir)) {
-            Files.createDirectories(uploadDir);
+            if(resource.exists()) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.IMAGE_JPEG)
+                        .body(resource);
+            } else {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.IMAGE_JPEG)
+                        .body(new UrlResource(Paths.get("uploads/notfound.jpeg").toUri()));
+            }
+        } catch(Exception e) {
+            return ResponseEntity.notFound().build();
         }
-
-        Path destination = Paths.get(uploadDir.toString(), uniqueFilename);
-        Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
-        return uniqueFilename;
-    }
-
-    private boolean isImageFile(MultipartFile file) {
-        String contentType = file.getContentType();
-        return contentType != null && contentType.startsWith("image/");
     }
 
     @GetMapping("")
     public ResponseEntity<ProductListResponse> getProducts(
-            @RequestParam("page") int page,
-            @RequestParam("limit") int limit
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "0", name = "category_id") Long categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit
     ) {
         PageRequest pageRequest = PageRequest.of(
                 page, limit,
-                Sort.by("createdAt").descending()
+                Sort.by("id").ascending()
         );
-        Page<ProductResponse> productPage = productService.getAllProducts(pageRequest);
+        Page<ProductResponse> productPage = productService.getAllProducts(keyword, categoryId,pageRequest);
         int totalPages = productPage.getTotalPages();
         List<ProductResponse> products = productPage.getContent();
         return ResponseEntity.ok(ProductListResponse.builder()
-                        .product(products)
+                        .products(products)
                         .totalPages(totalPages)
                         .build());
     }
@@ -188,5 +186,23 @@ public class ProductController {
             }
         }
         return ResponseEntity.ok("Fake products successfully");
+    }
+
+    private String storeFile(MultipartFile file) throws IOException {
+        String filename = StringUtils.cleanPath(file.getOriginalFilename());
+        String uniqueFilename = UUID.randomUUID().toString() + "_" + filename;
+        Path uploadDir = Paths.get("uploads");
+        if(!Files.exists(uploadDir)) {
+            Files.createDirectories(uploadDir);
+        }
+
+        Path destination = Paths.get(uploadDir.toString(), uniqueFilename);
+        Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
+        return uniqueFilename;
+    }
+
+    private boolean isImageFile(MultipartFile file) {
+        String contentType = file.getContentType();
+        return contentType != null && contentType.startsWith("image/");
     }
 }

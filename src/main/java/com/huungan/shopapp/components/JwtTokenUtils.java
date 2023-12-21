@@ -31,6 +31,7 @@ public class JwtTokenUtils {
 
     public String generateToken(User user) throws Exception {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("user_id", user.getId());
         //this.generateSecretKey(); // sWlcOSddy3AkZzNdieToLrMR9/8vGmqc9oYIOw82kuo=
         try {
             String token = Jwts.builder()

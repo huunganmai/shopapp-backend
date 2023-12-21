@@ -1,5 +1,6 @@
 package com.huungan.shopapp.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,6 +18,7 @@ public class OrderDetail {
 
     @ManyToOne
     @JoinColumn(name = "order_id")
+    @JsonBackReference
     private Order order;
 
     @ManyToOne
@@ -34,4 +36,5 @@ public class OrderDetail {
 
     @Column(name = "color", length = 20)
     private String color;
+
 }

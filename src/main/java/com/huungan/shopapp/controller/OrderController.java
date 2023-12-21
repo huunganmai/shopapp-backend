@@ -13,6 +13,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("${api.prefix}/orders")
@@ -47,7 +48,10 @@ public class OrderController {
     public ResponseEntity<?> getOrders(@Valid @PathVariable("user_id") Long userId) {
         try {
             List<Order> orders = orderService.findByUserId(userId);
-            return ResponseEntity.ok(orders);
+            List<OrderResponse> orderResponses = orders.stream()
+                    .map(OrderResponse::fromOrder)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(orderResponses);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -58,7 +62,8 @@ public class OrderController {
     public ResponseEntity<?> getOrder(@Valid @PathVariable("id") Long id) {
         try {
             Order existingOrder = orderService.getOrder(id);
-            return ResponseEntity.ok(existingOrder);
+            OrderResponse orderResponse = OrderResponse.fromOrder(existingOrder);
+            return ResponseEntity.ok(orderResponse);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

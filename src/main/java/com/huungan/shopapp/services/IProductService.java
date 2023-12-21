@@ -8,6 +8,8 @@ import com.huungan.shopapp.responses.products.ProductResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
+import java.util.List;
+
 public interface IProductService {
     public Product createProduct(ProductDTO productDTO) throws Exception;
 
@@ -25,4 +27,6 @@ public interface IProductService {
             Long productId,
             ProductImageDTO productImageDTO
     ) throws Exception;
+
+    public List<Product> findByProductIds(List<Long> produtcIds);
 }

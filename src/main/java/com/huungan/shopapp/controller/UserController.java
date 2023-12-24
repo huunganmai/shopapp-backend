@@ -5,6 +5,7 @@ import com.huungan.shopapp.dtos.UserLoginDTO;
 import com.huungan.shopapp.models.User;
 import com.huungan.shopapp.responses.users.LoginResponse;
 import com.huungan.shopapp.responses.users.RegisterResponse;
+import com.huungan.shopapp.responses.users.UserResponse;
 import com.huungan.shopapp.services.IUserService;
 import com.huungan.shopapp.components.LocalizationUtils;
 import com.huungan.shopapp.utils.MessageKeys;
@@ -13,10 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -77,6 +75,19 @@ public class UserController {
                             .message(localizationUtils.getLocalizedMessage(MessageKeys.LOGIN_FAILED, e.getMessage()))
                             .build()
             );
+        }
+    }
+
+    @PostMapping("/details")
+    public ResponseEntity<?> getUserDetails(
+            @RequestHeader("Authorization") String authorizationHeader
+    ) {
+        try {
+            String extractToken = authorizationHeader.substring(7);
+            User user = userService.getUserDetailsFromToken(extractToken);
+            return ResponseEntity.ok(UserResponse.fromUser(user));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
         }
     }
 }

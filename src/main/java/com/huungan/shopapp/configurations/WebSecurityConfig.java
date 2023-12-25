@@ -81,6 +81,10 @@ public class WebSecurityConfig {
                                     String.format("%s/order_details/**", apiPrefix)).hasAnyRole(Role.ADMIN, Role.USER)
                             .requestMatchers(HttpMethod.DELETE,
                                     String.format("%s/order_details/**", apiPrefix)).hasAnyRole(Role.ADMIN, Role.USER)
+
+
+                            .requestMatchers(HttpMethod.PUT,
+                                    String.format("%s/users/details/**",apiPrefix)).hasAnyRole(Role.USER)
                             .anyRequest()
                             .authenticated();
                 });

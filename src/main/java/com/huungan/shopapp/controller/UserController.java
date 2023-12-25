@@ -1,5 +1,6 @@
 package com.huungan.shopapp.controller;
 
+import com.huungan.shopapp.dtos.UpdateUserDTO;
 import com.huungan.shopapp.dtos.UserDTO;
 import com.huungan.shopapp.dtos.UserLoginDTO;
 import com.huungan.shopapp.models.User;
@@ -17,6 +18,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.ResourceBundle;
 
 @RestController
 @RequestMapping("${api.prefix}/users")
@@ -88,6 +90,23 @@ public class UserController {
             return ResponseEntity.ok(UserResponse.fromUser(user));
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PutMapping("/details/{id}")
+    public ResponseEntity<?> updateUser(
+            @PathVariable("id") long id,
+            @RequestBody UpdateUserDTO updatedUserDTO,
+            @RequestHeader("Authorization") String authorizationHeader
+            ) {
+        try {
+            String extractToken = authorizationHeader.substring(7);
+            User user = userService.getUserDetailsFromToken(extractToken);
+            User updatedUser = userService.updateUser(id, updatedUserDTO);
+            UserResponse userResponse = UserResponse.fromUser(updatedUser);
+            return ResponseEntity.ok(userResponse);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }

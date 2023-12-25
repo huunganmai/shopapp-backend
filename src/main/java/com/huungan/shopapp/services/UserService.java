@@ -2,6 +2,7 @@ package com.huungan.shopapp.services;
 
 import com.huungan.shopapp.components.JwtTokenUtils;
 import com.huungan.shopapp.components.LocalizationUtils;
+import com.huungan.shopapp.dtos.UpdateUserDTO;
 import com.huungan.shopapp.dtos.UserDTO;
 import com.huungan.shopapp.exceptions.DataNotFoundException;
 import com.huungan.shopapp.exceptions.PermissionDenyException;
@@ -37,7 +38,8 @@ public class UserService implements IUserService{
         String phoneNumber = userDTO.getPhoneNumber();
         // Check if the phone number already exists or not
         if(userRepository.existsByPhoneNumber(phoneNumber)) {
-            throw new DataIntegrityViolationException(localizationUtils.getLocalizedMessage(MessageKeys.PHONE_EXISTING));
+            throw new DataIntegrityViolationException(
+                    localizationUtils.getLocalizedMessage(MessageKeys.PHONE_EXISTING));
         }
         Role role = roleRepository.findById(userDTO.getRoleId())
                 .orElseThrow(() -> new DataNotFoundException("Role not found"));
@@ -73,7 +75,8 @@ public class UserService implements IUserService{
         // check password
         if(existingUser.getFacebookAccountId() == 0 && existingUser.getGoogleAccountId() == 0) {
             if(!passwordEncoder.matches(password, existingUser.getPassword())) {
-                throw new BadCredentialsException(localizationUtils.getLocalizedMessage(MessageKeys.WRONG_PHONE_PASSWORD));
+                throw new BadCredentialsException(
+                        localizationUtils.getLocalizedMessage(MessageKeys.WRONG_PHONE_PASSWORD));
             }
         }
         // check role
@@ -101,5 +104,53 @@ public class UserService implements IUserService{
             throw new DataNotFoundException("User not found");
         }
         return userOptional.get();
+    }
+
+    @Override
+    public User updateUser(long id ,UpdateUserDTO updatedUserDTO) throws Exception {
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new DataNotFoundException(
+                        localizationUtils.getLocalizedMessage(MessageKeys.USER_NOT_FOUND, id)));
+
+        // Check if phone number existing
+        String newPhoneNumber = updatedUserDTO.getPhoneNumber();
+        if(!existingUser.getPhoneNumber().equals(updatedUserDTO.getPhoneNumber()) &&
+            userRepository.existsByPhoneNumber(newPhoneNumber)) {
+            throw new DataIntegrityViolationException(
+                    localizationUtils.getLocalizedMessage(MessageKeys.PHONE_EXISTING));
+        }
+
+        if(updatedUserDTO.getFullName() != null) {
+            existingUser.setFullName(updatedUserDTO.getFullName());
+        }
+        if (newPhoneNumber != null) {
+            existingUser.setPhoneNumber(newPhoneNumber);
+        }
+        if (updatedUserDTO.getAddress() != null) {
+            existingUser.setAddress(updatedUserDTO.getAddress());
+        }
+        if (updatedUserDTO.getDateOfBirth() != null) {
+            existingUser.setDateOfBirth(updatedUserDTO.getDateOfBirth());
+        }
+//        if (updatedUserDTO.getFacebookAccountId() > 0) {
+//            existingUser.setFacebookAccountId(updatedUserDTO.getFacebookAccountId());
+//        }
+//        if (updatedUserDTO.getGoogleAccountId() > 0) {
+//            existingUser.setGoogleAccountId(updatedUserDTO.getGoogleAccountId());
+//        }
+
+        // check passwor and encode password
+        if (updatedUserDTO.getPassword() != null
+                && !updatedUserDTO.getPassword().isEmpty()) {
+            if(!updatedUserDTO.getPassword().equals(updatedUserDTO.getRetypePassword())) {
+                throw new DataNotFoundException(
+                        localizationUtils.getLocalizedMessage(MessageKeys.PASSWORD_NOT_MATCH));
+            }
+            String newPassword = updatedUserDTO.getPassword();
+            String encodedPassword = passwordEncoder.encode(newPassword);
+            existingUser.setPassword(encodedPassword);
+        }
+
+        return userRepository.save(existingUser);
     }
 }

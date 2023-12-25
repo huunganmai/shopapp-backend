@@ -204,7 +204,13 @@ public class ProductController {
     }
 
     private String storeFile(MultipartFile file) throws IOException {
-        String filename = StringUtils.cleanPath(file.getOriginalFilename());
+        String filename = "";
+        if(file.getOriginalFilename() != null) {
+            filename = StringUtils.cleanPath(file.getOriginalFilename());
+        }
+        if(filename.isEmpty()) {
+            throw new IllegalArgumentException("Invalid filename or filename is empty");
+        }
         String uniqueFilename = UUID.randomUUID().toString() + "_" + filename;
         Path uploadDir = Paths.get("uploads");
         if(!Files.exists(uploadDir)) {

@@ -36,7 +36,8 @@ public class OrderController {
                         .toList();
                 return ResponseEntity.badRequest().body(errorMessages);
             }
-            OrderResponse orderResponse = orderService.createOrder(orderDTO);
+            Order order = orderService.createOrder(orderDTO);
+            OrderResponse orderResponse = OrderResponse.fromOrder(order);
             return ResponseEntity.ok(orderResponse);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

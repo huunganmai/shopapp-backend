@@ -33,7 +33,7 @@ public class OrderService implements IOrderService{
 
     @Override
     @Transactional
-    public OrderResponse createOrder(OrderDTO orderDTO) throws Exception {
+    public Order createOrder(OrderDTO orderDTO) throws Exception {
         User user = userRepository.findById(orderDTO.getUserId())
                 .orElseThrow(() -> new DataNotFoundException(
                         "Cannot find the user with id: " + orderDTO.getUserId()));
@@ -52,9 +52,9 @@ public class OrderService implements IOrderService{
         order.setShippingDate(shippingDate);
         order.setTotalMoney(orderDTO.getTotalMoney());
         orderRepository.save(order);
-        modelMapper.typeMap(Order.class, OrderResponse.class);
-        OrderResponse orderResponse = new OrderResponse();
-        modelMapper.map(order, orderResponse);
+//        modelMapper.typeMap(Order.class, OrderResponse.class);
+//        OrderResponse orderResponse = new OrderResponse();
+//        modelMapper.map(order, orderResponse);
 
         List<OrderDetail> orderDetails = new ArrayList<>();
         for(CartItemDTO cartItemDTO : orderDTO.getCartItems()) {
@@ -72,7 +72,7 @@ public class OrderService implements IOrderService{
         }
         orderDetailRepository.saveAll(orderDetails);
 
-        return orderResponse;
+        return order;
     }
 
     @Override

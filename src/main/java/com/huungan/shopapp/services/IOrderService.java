@@ -7,7 +7,7 @@ import com.huungan.shopapp.responses.orders.OrderResponse;
 import java.util.List;
 
 public interface IOrderService {
-    OrderResponse createOrder(OrderDTO orderDTO) throws Exception;
+    Order createOrder(OrderDTO orderDTO) throws Exception;
 
     Order getOrder(Long id) throws Exception;
 

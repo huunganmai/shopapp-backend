@@ -1,5 +1,6 @@
 package com.huungan.shopapp.services;
 
+import com.huungan.shopapp.components.LocalizationUtils;
 import com.huungan.shopapp.dtos.ProductDTO;
 import com.huungan.shopapp.dtos.ProductImageDTO;
 import com.huungan.shopapp.exceptions.DataNotFoundException;
@@ -11,11 +12,13 @@ import com.huungan.shopapp.repositories.CategoryRepository;
 import com.huungan.shopapp.repositories.ProductImageRepository;
 import com.huungan.shopapp.repositories.ProductRepository;
 import com.huungan.shopapp.responses.products.ProductResponse;
+import com.huungan.shopapp.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +29,7 @@ public class ProductService implements IProductService{
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductImageRepository productImageRepository;
+    private final LocalizationUtils localizationUtils;
 
     @Override
     @Transactional
@@ -72,11 +76,19 @@ public class ProductService implements IProductService{
                 .orElseThrow(() -> new DataNotFoundException(
                         "Cannot find category with id = " +
                         productDTO.getCategoryId()));
-        existingProduct.setName(productDTO.getName());
-        existingProduct.setPrice(productDTO.getPrice());
         existingProduct.setCategory(existingCategory);
-        existingProduct.setThumbnail(productDTO.getThumbnail());
-        existingProduct.setDescription(productDTO.getDescription());
+        if(productDTO.getName() != null && !productDTO.getName().isEmpty()) {
+            existingProduct.setName(productDTO.getName());
+        }
+        if(productDTO.getPrice() > 0) {
+            existingProduct.setPrice(productDTO.getPrice());
+        }
+        if(productDTO.getDescription() != null && !productDTO.getDescription().isEmpty()) {
+            existingProduct.setDescription(productDTO.getDescription());
+        }
+        if(productDTO.getThumbnail() != null && !productDTO.getThumbnail().isEmpty()) {
+            existingProduct.setThumbnail(productDTO.getThumbnail());
+        }
 
         return productRepository.save(existingProduct);
     }
@@ -118,5 +130,22 @@ public class ProductService implements IProductService{
     @Override
     public List<Product> findByProductIds(List<Long> produtcIds) {
         return productRepository.findByProductIds(produtcIds);
+    }
+
+    @Override
+    @Transactional
+    public void addThumbnailToProduct(long id, String filename) throws Exception {
+        Product existingProduct = productRepository.findById(id)
+                .orElseThrow(() -> new DataNotFoundException(
+                        localizationUtils.getLocalizedMessage(MessageKeys.FIND_PRODUCT_BY_ID_FAILED
+                )));
+        existingProduct.setThumbnail(filename);
+        productRepository.save(existingProduct);
+    }
+
+
+    private boolean isImageFile(MultipartFile file) {
+        String contentType = file.getContentType();
+        return contentType != null && contentType.startsWith("image/");
     }
 }

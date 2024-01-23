@@ -29,4 +29,8 @@ public interface IProductService {
     ) throws Exception;
 
     public List<Product> findByProductIds(List<Long> produtcIds);
+
+    void addThumbnailToProduct(long id, String filename) throws Exception;
+
+
 }

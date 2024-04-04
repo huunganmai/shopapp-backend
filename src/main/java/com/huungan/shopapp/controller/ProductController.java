@@ -1,11 +1,13 @@
 package com.huungan.shopapp.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.huungan.shopapp.components.LocalizationUtils;
 import com.huungan.shopapp.dtos.ProductDTO;
 import com.huungan.shopapp.models.Product;
 import com.huungan.shopapp.responses.MessageResponse;
 import com.huungan.shopapp.responses.products.ProductListResponse;
 import com.huungan.shopapp.responses.products.ProductResponse;
+import com.huungan.shopapp.services.IProductRedisService;
 import com.huungan.shopapp.services.IProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProductController {
     private final IProductService productService;
+    private final IProductRedisService productRedisService;
     private final LocalizationUtils localizationUtils;
     private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
 
@@ -63,18 +66,30 @@ public class ProductController {
             @RequestParam(defaultValue = "0", name = "category_id") Long categoryId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit
-    ) {
+    ) throws JsonProcessingException {
+        int totalPages = 0;
         PageRequest pageRequest = PageRequest.of(
                 page, limit,
                 Sort.by("id").ascending()
         );
         logger.info(String.format("keyword = %s, category_id = %d, page = %d, limit = %d",
                 keyword, categoryId, page, limit));
-        Page<ProductResponse> productPage = productService.getAllProducts(keyword, categoryId,pageRequest);
-        int totalPages = productPage.getTotalPages();
-        List<ProductResponse> products = productPage.getContent();
+        List<ProductResponse> productResponses = productRedisService
+                .getAllProducts(keyword, categoryId, pageRequest);
+        if(productResponses == null) {
+            Page<ProductResponse> productPage = productService.getAllProducts(keyword, categoryId,pageRequest);
+            totalPages = productPage.getTotalPages();
+            productResponses = productPage.getContent();
+            productRedisService.saveAllProducts(
+                    productResponses,
+                    keyword,
+                    categoryId,
+                    pageRequest
+            );
+        }
+        ;
         return ResponseEntity.ok(ProductListResponse.builder()
-                        .products(products)
+                        .products(productResponses)
                         .totalPages(totalPages)
                         .build());
     }

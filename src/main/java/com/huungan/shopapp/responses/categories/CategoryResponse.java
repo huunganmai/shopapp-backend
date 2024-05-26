@@ -10,12 +10,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class CategoryResponse {
-    @JsonProperty("mesage")
-    private String message;
-
-    @JsonProperty("error")
-    private String error;
-
     @JsonProperty("category")
     private Category category;
 }

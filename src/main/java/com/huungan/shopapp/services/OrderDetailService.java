@@ -51,7 +51,7 @@ public class OrderDetailService implements IOrderDetailService{
     @Override
     @Transactional
     public OrderDetail updateOrderDetail(Long id, OrderDetailDTO orderDetailDTO) throws Exception {
-        OrderDetail existingOrderDetail = orderDetailRepository.findById(id)
+            OrderDetail existingOrderDetail = orderDetailRepository.findById(id)
                 .orElseThrow(() -> new DataNotFoundException("Cannot find order detail with id:" + id));
         Order existingOrder = orderRepository.findById(orderDetailDTO.getOrderId())
                 .orElseThrow(() -> new DataNotFoundException(

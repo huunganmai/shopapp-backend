@@ -38,7 +38,7 @@ public class OrderService implements IOrderService{
     public Order createOrder(OrderDTO orderDTO) throws Exception {
         User user = userRepository.findById(orderDTO.getUserId())
                 .orElseThrow(() -> new DataNotFoundException(
-                        "Cannot find the user with id: " + orderDTO.getUserId()));
+                        localizationUtils.getLocalizedMessage(MessageKeys.USER_NOT_FOUND) + orderDTO.getUserId()));
         modelMapper.typeMap(OrderDTO.class, Order.class)
                 .addMappings(mapper -> mapper.skip(Order::setId));
         Order order = new Order();
@@ -51,13 +51,12 @@ public class OrderService implements IOrderService{
             throw new DataNotFoundException("Shipping date must be after order date");
         }
 
-        order.setShippingDate(shippingDate);
         order.setTotalMoney(orderDTO.getTotalMoney());
         orderRepository.save(order);
 //        modelMapper.typeMap(Order.class, OrderResponse.class);
 //        OrderResponse orderResponse = new OrderResponse();
 //        modelMapper.map(order, orderResponse);
-
+        float totalMoney = 0;
         List<OrderDetail> orderDetails = new ArrayList<>();
         for(CartItemDTO cartItemDTO : orderDTO.getCartItems()) {
             OrderDetail orderDetail = new OrderDetail();
@@ -71,8 +70,12 @@ public class OrderService implements IOrderService{
             orderDetail.setTotalMoney(product.getPrice() * cartItemDTO.getQuantity());
 
             orderDetails.add(orderDetail);
+            totalMoney += cartItemDTO.getQuantity() * product.getPrice();
         }
         orderDetailRepository.saveAll(orderDetails);
+
+        order.setTotalMoney(totalMoney);
+        orderRepository.save(order);
 
         return order;
     }
@@ -80,16 +83,20 @@ public class OrderService implements IOrderService{
     @Override
     public Order getOrder(Long id) throws Exception {
         return orderRepository.findById(id)
-                .orElseThrow(() -> new DataNotFoundException("Cannot find the orders with id = " + id));
+                .orElseThrow(() -> new DataNotFoundException(localizationUtils.getLocalizedMessage(
+                        MessageKeys.FIND_ORDER_BY_ID_NOT_FOUND)+ id));
     }
 
     @Override
     @Transactional
     public Order updateOrder(Long id, OrderDTO orderDTO) throws Exception {
         Order existingOrder = orderRepository.findById(id)
-                .orElseThrow(() -> new DataNotFoundException("Cannot find the order with id: " + id));
+                .orElseThrow(() -> new DataNotFoundException(localizationUtils.getLocalizedMessage(
+                        MessageKeys.FIND_ORDER_BY_ID_NOT_FOUND) + id));
         User exitsingUser = userRepository.findById(orderDTO.getUserId())
-                .orElseThrow(() -> new DataNotFoundException("Cannot find user with id: " + orderDTO.getUserId()));
+                .orElseThrow(() -> new DataNotFoundException(localizationUtils.getLocalizedMessage(
+                        MessageKeys.USER_NOT_FOUND
+                ) + orderDTO.getUserId()));
         modelMapper.typeMap(OrderDTO.class, Order.class)
                 .addMappings(mapper -> mapper.skip(Order::setId));
         modelMapper.map(orderDTO, existingOrder);

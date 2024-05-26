@@ -1,5 +1,6 @@
 package com.huungan.shopapp.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -33,5 +34,6 @@ public class Product extends BaseEntity{
     private Category category;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonProperty("product_images")
     private List<ProductImage> productImages;
 }

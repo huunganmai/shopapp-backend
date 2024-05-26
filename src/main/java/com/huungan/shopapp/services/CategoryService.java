@@ -1,6 +1,7 @@
 package com.huungan.shopapp.services;
 
 import com.huungan.shopapp.dtos.CategoryDTO;
+import com.huungan.shopapp.exceptions.DataNotFoundException;
 import com.huungan.shopapp.models.Category;
 import com.huungan.shopapp.repositories.CategoryRepository;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,9 +26,9 @@ public class CategoryService implements ICategoryService{
     }
 
     @Override
-    public Category getCategoryById(long id) {
+    public Category getCategoryById(long id) throws DataNotFoundException {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new DataNotFoundException("Category not found"));
     }
 
     @Override
@@ -37,7 +38,7 @@ public class CategoryService implements ICategoryService{
 
     @Override
     @Transactional
-    public Category updateCategory(long categoryId, CategoryDTO categoryDTO) {
+    public Category updateCategory(long categoryId, CategoryDTO categoryDTO) throws Exception {
         Category existingCategory = getCategoryById(categoryId);
         existingCategory.setName(categoryDTO.getName());
         categoryRepository.save(existingCategory);

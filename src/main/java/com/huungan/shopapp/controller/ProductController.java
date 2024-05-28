@@ -78,27 +78,30 @@ public class ProductController {
         );
         logger.info(String.format("keyword = %s, category_id = %d, page = %d, limit = %d",
                 keyword, categoryId, page, limit));
-        List<ProductResponse> productResponses = productRedisService
+        ProductListResponse productListResponse = productRedisService
                 .getAllProducts(keyword, categoryId, pageRequest);
-        if(productResponses == null) {
+        if(productListResponse == null) {
             Page<ProductResponse> productPage = productService.getAllProducts(keyword, categoryId,pageRequest);
             totalPages = productPage.getTotalPages();
-            productResponses = productPage.getContent();
+            productListResponse = ProductListResponse.builder()
+                    .products(productPage.getContent())
+                    .totalPages(productPage.getTotalPages())
+                    .build();
             productRedisService.saveAllProducts(
-                    productResponses,
+                    productListResponse,
                     keyword,
                     categoryId,
                     pageRequest
             );
         }
-        ProductListResponse productListResponse = ProductListResponse.builder()
-                .products(productResponses)
-                .totalPages(totalPages)
-                .build();
+//        ProductListResponse productListResponse = ProductListResponse.builder()
+//                .products(productResponses)
+//                .totalPages(totalPages)
+//                .build();
         return ResponseEntity.ok().body(ResponseObject.builder()
                 .status(HttpStatus.OK)
                 .data(productListResponse)
-                .message(localizationUtils.getLocalizedMessage(MessageKeys.FIND_PRODUCT_BY_KEYWORD_SUCCESSFULLY))
+                .message(localizationUtils.getLocalizedMessage(MessageKeys.FIND_PRODUCT_BY_KEYWORD_SUCCESSFULLY, keyword))
                 .build());
     }
 

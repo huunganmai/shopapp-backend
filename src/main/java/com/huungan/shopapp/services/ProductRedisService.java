@@ -3,7 +3,7 @@ package com.huungan.shopapp.services;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.huungan.shopapp.responses.products.ProductResponse;
+import com.huungan.shopapp.responses.products.ProductListResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -39,25 +39,25 @@ public class ProductRedisService implements IProductRedisService{
     }
 
     @Override
-    public List<ProductResponse> getAllProducts(String keyword, Long categoryId, PageRequest pageRequest)
+    public ProductListResponse getAllProducts(String keyword, Long categoryId, PageRequest pageRequest)
             throws JsonProcessingException {
         String key = this.getKeyFrom(keyword, categoryId, pageRequest);
         String json = (String) redisTemplate.opsForValue().get(key);
-        List<ProductResponse> productResponses =
+        ProductListResponse productListResponse =
                 json != null ?
-                        redisObjectMapper.readValue(json, new TypeReference<List<ProductResponse>>() {})
+                        redisObjectMapper.readValue(json, new TypeReference<ProductListResponse>() {})
                         : null;
-        return productResponses;
+        return productListResponse;
     }
 
     @Override
-    public void saveAllProducts(List<ProductResponse> productResponses,
+    public void saveAllProducts(ProductListResponse productListResponses,
                                 String keyword,
                                 Long categoryId,
                                 PageRequest pageRequest)
             throws JsonProcessingException {
         String key = this.getKeyFrom(keyword, categoryId, pageRequest);
-        String json = redisObjectMapper.writeValueAsString(productResponses);
+        String json = redisObjectMapper.writeValueAsString(productListResponses);
         redisTemplate.opsForValue().set(key, json);
     }
 }

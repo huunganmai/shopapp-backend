@@ -23,7 +23,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("${api.prefix}/product_images")
+@RequestMapping("${api.prefix}/product-images")
 public class ProductImageController {
     private final IProductImageService productImageService;
     private final ProductService productService;

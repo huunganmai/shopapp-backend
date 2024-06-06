@@ -1,20 +1,25 @@
 package com.huungan.shopapp.controller;
 
+import com.huungan.shopapp.dtos.RefreshTokenDTO;
 import com.huungan.shopapp.dtos.UpdateUserDTO;
 import com.huungan.shopapp.dtos.UserDTO;
 import com.huungan.shopapp.dtos.UserLoginDTO;
+import com.huungan.shopapp.models.Token;
 import com.huungan.shopapp.models.User;
 import com.huungan.shopapp.responses.ResponseObject;
 import com.huungan.shopapp.responses.users.LoginResponse;
 import com.huungan.shopapp.responses.users.RegisterResponse;
 import com.huungan.shopapp.responses.users.UserResponse;
+import com.huungan.shopapp.services.ITokenService;
 import com.huungan.shopapp.services.IUserService;
 import com.huungan.shopapp.components.LocalizationUtils;
 import com.huungan.shopapp.utils.MessageKeys;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +33,7 @@ import java.util.ResourceBundle;
 public class UserController {
     private final IUserService userService;
     private final LocalizationUtils localizationUtils;
+    private final ITokenService tokenService;
 
     @PostMapping("/register")
     public ResponseEntity<ResponseObject> createUser(
@@ -60,20 +66,61 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<ResponseObject> login(
-            @Valid @RequestBody UserLoginDTO userLoginDTO
+            @Valid @RequestBody UserLoginDTO userLoginDTO,
+            HttpServletRequest request
     ) throws Exception {
         String token = userService.login(
                 userLoginDTO.getPhoneNumber(),
                 userLoginDTO.getPassword(),
                 userLoginDTO.getRoleId() == null ? 1 : userLoginDTO.getRoleId()
         );
+        String userAgent = request.getHeader("User-Agent");
+        User userDetail = userService.getUserDetailsFromToken(token);
+        Token jwtToken = tokenService.addToken(userDetail, token, isMobileDevice(userAgent));
+
+        LoginResponse loginResponse = LoginResponse.builder()
+                .message(localizationUtils.getLocalizedMessage(MessageKeys.LOGIN_SUCCESSFULLY))
+                .token(jwtToken.getToken())
+                .tokenType(jwtToken.getTokenType())
+                .refreshToken(jwtToken.getRefreshToken())
+                .userId(userDetail.getId())
+                .username(userDetail.getUsername())
+                .roles(userDetail.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
+                .build();
+
         return ResponseEntity.ok().body(ResponseObject.builder()
                 .status(HttpStatus.OK)
-                .data(LoginResponse.builder()
-                        .token(token)
-                        .build())
+                .data(loginResponse)
                 .message(localizationUtils.getLocalizedMessage(MessageKeys.LOGIN_SUCCESSFULLY))
                 .build());
+    }
+
+    private boolean isMobileDevice(String agent) {
+        return agent.toLowerCase().contains("mobile");
+    }
+
+    @PostMapping("refresh-token")
+    public ResponseEntity<ResponseObject> refreshToken(
+            @Valid @RequestBody RefreshTokenDTO refreshTokenDTO
+    ) throws Exception {
+        User userDetail = userService.getUserDetailsFromRefreshToken(refreshTokenDTO.getRefreshToken());
+        Token jwtToken = tokenService.refreshToken(userDetail, refreshTokenDTO.getRefreshToken());
+        LoginResponse loginResponse = LoginResponse.builder()
+                .message("Refresh token successfully")
+                .token(jwtToken.getToken())
+                .refreshToken(jwtToken.getRefreshToken())
+                .tokenType(jwtToken.getTokenType())
+                .username(userDetail.getUsername())
+                .roles(userDetail.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
+                .userId(userDetail.getId())
+                .build();
+        return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                        .message("Refresh token successfully")
+                        .status(HttpStatus.OK)
+                        .data(loginResponse)
+                        .build()
+        );
     }
 
     @PostMapping("/details")

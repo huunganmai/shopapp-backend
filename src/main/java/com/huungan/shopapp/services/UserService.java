@@ -7,8 +7,10 @@ import com.huungan.shopapp.dtos.UserDTO;
 import com.huungan.shopapp.exceptions.DataNotFoundException;
 import com.huungan.shopapp.exceptions.PermissionDenyException;
 import com.huungan.shopapp.models.Role;
+import com.huungan.shopapp.models.Token;
 import com.huungan.shopapp.models.User;
 import com.huungan.shopapp.repositories.RoleRepository;
+import com.huungan.shopapp.repositories.TokenRepository;
 import com.huungan.shopapp.repositories.UserRepository;
 import com.huungan.shopapp.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class UserService implements IUserService{
     private final JwtTokenUtils jwtTokenUtil;
     private final AuthenticationManager authenticationManager;
     private final LocalizationUtils localizationUtils;
+    private final TokenRepository tokenRepository;
 
     @Override
     @Transactional
@@ -52,6 +55,7 @@ public class UserService implements IUserService{
                 .phoneNumber(userDTO.getPhoneNumber())
                 .password(userDTO.getPassword())
                 .address(userDTO.getAddress())
+                .active(true)
                 .dateOfBirth(userDTO.getDateOfBirth())
                 .facebookAccountId(userDTO.getFacebookAccountId())
                 .googleAccountId(userDTO.getGoogleAccountId())
@@ -104,6 +108,12 @@ public class UserService implements IUserService{
             throw new DataNotFoundException("User not found");
         }
         return userOptional.get();
+    }
+
+    @Override
+    public User getUserDetailsFromRefreshToken(String refreshToken) throws Exception {
+        Token existingToken = tokenRepository.findByRefreshToken(refreshToken);
+        return getUserDetailsFromToken(existingToken.getToken());
     }
 
     @Override
